@@ -28,25 +28,32 @@ public:
 
   void StartServer();
 
-  void ListenerLoop();
+  void InitIOThreadPool();
+
+  void EventLoop();
 
   void WorkerLoop(int id);
 
   void AddHandler(const std::string &path, HttpMethod method, HttpHandler callback);
 
 private:
-  void HandleEvent(int worker_fd, epoll_event event);
+  void HandleEvent(epoll_event &event);
+
+  void HandleAcceptEvent(epoll_event &event) const;
+
+  void HandleReadEvent(epoll_event &event);
+
+  void HandleWriteEvent(epoll_event &event);
 
   std::string address_;
   int port_;
 
   int server_fd_;
+  int epoll_fd_;
 
   int num_threads_;
-  std::vector<int> worker_epoll_fd_;
-  std::vector<std::vector<epoll_event>> worker_events_;
-  std::vector<std::thread> worker_threads_;
-  std::thread listener_thread_;
+  std::vector<epoll_event> events_;
+  std::thread event_thread_;
 };
 
 } // namespace http
