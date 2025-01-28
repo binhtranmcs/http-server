@@ -5,20 +5,20 @@
 #ifndef HTTP_SERVER_HTTPSERVER_H
 #define HTTP_SERVER_HTTPSERVER_H
 
-#include <string>
 #include <functional>
+#include <string>
 #include <thread>
-#include "sys/epoll.h"
 
+#include "HttpMethod.h"
 #include "HttpRequest.h"
 #include "HttpResponse.h"
-#include "HttpMethod.h"
+#include "sys/epoll.h"
 
 namespace network {
 
 const int MAX_EPOLL_EVENTS = 10000;
 
-using HttpHandler = std::function<HttpResponse>(const HttpRequest &);
+using HttpHandler = std::function<HttpResponse>(const HttpRequest&);
 
 class HttpServer {
 public:
@@ -34,16 +34,16 @@ public:
 
   void WorkerLoop(int id);
 
-  void AddHandler(const std::string &path, HttpMethod method, HttpHandler callback);
+  void AddHandler(const std::string& path, HttpMethod method, HttpHandler callback);
 
 private:
-  void HandleEvent(epoll_event &event);
+  void HandleEvent(epoll_event& event);
 
-  void HandleAcceptEvent(epoll_event &event) const;
+  void HandleAcceptEvent(epoll_event& event) const;
 
-  void HandleReadEvent(epoll_event &event);
+  void HandleReadEvent(epoll_event& event);
 
-  void HandleWriteEvent(epoll_event &event);
+  void HandleWriteEvent(epoll_event& event);
 
   std::string address_;
   int port_;
@@ -56,6 +56,6 @@ private:
   std::thread event_thread_;
 };
 
-} // namespace http
+} // namespace network
 
 #endif // HTTP_SERVER_HTTPSERVER_H

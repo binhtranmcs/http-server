@@ -7,10 +7,8 @@
 
 namespace network {
 
-class HttpResponse {
+class HttpResponse {};
 
-};
+} // namespace network
 
-}
-
-#endif //HTTP_SERVER_SRC_HTTPRESPONSE_H
+#endif // HTTP_SERVER_SRC_HTTPRESPONSE_H

@@ -3,30 +3,34 @@
 //
 
 #include "HttpServer.h"
+
 #include <arpa/inet.h>
 #include <unistd.h>
 
-#include <utility>
-#include <stdexcept>
 #include <iostream>
+#include <stdexcept>
+#include <utility>
 
 namespace network {
 
 HttpServer::HttpServer(std::string address, int port, int num_threads)
-    : address_(std::move(address)), port_(port), num_threads_(num_threads), events_(MAX_EPOLL_EVENTS) {
+    : address_(std::move(address))
+    , port_(port)
+    , num_threads_(num_threads)
+    , events_(MAX_EPOLL_EVENTS) {
   if ((server_fd_ = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0)) < 0) {
     throw std::runtime_error("create socket failed");
   }
   // TODO
-//  struct timeval timeout{};
-//  timeout.tv_sec = 10;
-//  timeout.tv_usec = 100000;
-//  if (setsockopt(server_fd_, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout)) < 0) {
-//    throw std::runtime_error("setsockopt failed");
-//  }
-//  if (setsockopt(server_fd_, SOL_SOCKET, SO_SNDTIMEO, &timeout, sizeof(timeout)) < 0) {
-//    throw std::runtime_error("setsockopt failed");
-//  }
+  //  struct timeval timeout{};
+  //  timeout.tv_sec = 10;
+  //  timeout.tv_usec = 100000;
+  //  if (setsockopt(server_fd_, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout)) < 0) {
+  //    throw std::runtime_error("setsockopt failed");
+  //  }
+  //  if (setsockopt(server_fd_, SOL_SOCKET, SO_SNDTIMEO, &timeout, sizeof(timeout)) < 0) {
+  //    throw std::runtime_error("setsockopt failed");
+  //  }
 }
 
 HttpServer::~HttpServer() {
@@ -39,42 +43,42 @@ void HttpServer::StartServer() {
   address.sin_port = htons(port_);
   address.sin_addr.s_addr = INADDR_ANY;
 
-  if (bind(server_fd_, (sockaddr *) &address, sizeof(address)) < 0) {
+  if (bind(server_fd_, (sockaddr *)&address, sizeof(address)) < 0) {
     throw std::runtime_error("bind failed");
   }
   if (listen(server_fd_, 0) < 0) {
     throw std::runtime_error("listen failed");
   }
 
-//  worker_threads_.reserve(num_threads_);
-//  for (int id = 0; id < num_threads_; ++id) {
-//    if ((worker_epoll_fd_[id] = epoll_create1(0)) < 0) {
-//      throw std::runtime_error("create worker fd failed");
-//    }
-//    worker_threads_.emplace_back(&HttpServer::WorkerLoop, this, id);
-//  }
+  //  worker_threads_.reserve(num_threads_);
+  //  for (int id = 0; id < num_threads_; ++id) {
+  //    if ((worker_epoll_fd_[id] = epoll_create1(0)) < 0) {
+  //      throw std::runtime_error("create worker fd failed");
+  //    }
+  //    worker_threads_.emplace_back(&HttpServer::WorkerLoop, this, id);
+  //  }
 
   event_thread_ = std::thread(&HttpServer::EventLoop, this);
 }
 
 void HttpServer::WorkerLoop(int id) {
-//  int worker_fd = worker_epoll_fd_[id];
-//  auto &worker_events = worker_events_[id];
-//  while (true) {
-//    int nfds = epoll_wait(worker_fd, worker_events.data(), MAX_EPOLL_EVENTS, 0);
-//    if (nfds < 0) {
-//      throw std::runtime_error("epoll_wait failed");
-//    }
-//
-//    for (int i = 0; i < nfds; ++i) {
-//      epoll_event &event = worker_events[i];
-//      if (event.events == EPOLLIN) {
-//        HandleEvent(worker_fd, event);
-//      } else {
-//        close(event.data.fd);
-//      }
-//    }
-//  }
+  //  int worker_fd = worker_epoll_fd_[id];
+  //  auto &worker_events = worker_events_[id];
+  //  while (true) {
+  //    int nfds = epoll_wait(worker_fd, worker_events.data(), MAX_EPOLL_EVENTS, 0);
+  //    if (nfds < 0) {
+  //      throw std::runtime_error("epoll_wait failed");
+  //    }
+  //
+  //    for (int i = 0; i < nfds; ++i) {
+  //      epoll_event &event = worker_events[i];
+  //      if (event.events == EPOLLIN) {
+  //        HandleEvent(worker_fd, event);
+  //      } else {
+  //        close(event.data.fd);
+  //      }
+  //    }
+  //  }
 }
 
 void HttpServer::EventLoop() {
@@ -94,9 +98,9 @@ void HttpServer::EventLoop() {
       HandleEvent(events_[i]);
     }
 
-    client_fd = accept4(server_fd_, (sockaddr *) &client_address, &client_len, 0);
+    client_fd = accept4(server_fd_, (sockaddr *)&client_address, &client_len, 0);
     if (client_fd < 0) {
-//      std::cout << "error " << client_fd << ' ' << errno << std::endl;
+      //      std::cout << "error " << client_fd << ' ' << errno << std::endl;
       continue;
     }
     std::cout << "??????????" << std::endl;
@@ -113,11 +117,10 @@ void HttpServer::EventLoop() {
   }
 }
 
-void HttpServer::AddHandler(std::string const &path, HttpMethod method, HttpHandler callback) {
-
+void HttpServer::AddHandler(std::string const& path, HttpMethod method, HttpHandler callback) {
 }
 
-void HttpServer::HandleEvent(epoll_event &event) {
+void HttpServer::HandleEvent(epoll_event& event) {
   if (event.data.fd == server_fd_) {
     // this is a new connection
     HandleAcceptEvent(event);
@@ -129,11 +132,11 @@ void HttpServer::HandleEvent(epoll_event &event) {
   }
 }
 
-void HttpServer::HandleAcceptEvent(epoll_event &/*event*/) const {
+void HttpServer::HandleAcceptEvent(epoll_event& /*event*/) const {
   sockaddr_in client_address{};
   socklen_t client_len = sizeof(client_address);
 
-  int client_fd = accept4(server_fd_, (sockaddr *) &client_address, &client_len, 0);
+  int client_fd = accept4(server_fd_, (sockaddr *)&client_address, &client_len, 0);
   if (client_fd < 0) {
     std::cout << "accept error " << client_fd << ' ' << errno << std::endl;
     return;
@@ -149,12 +152,10 @@ void HttpServer::HandleAcceptEvent(epoll_event &/*event*/) const {
   }
 }
 
-void HttpServer::HandleReadEvent(epoll_event &event) {
-  
+void HttpServer::HandleReadEvent(epoll_event& event) {
 }
 
-void HttpServer::HandleWriteEvent(epoll_event &event) {
-
+void HttpServer::HandleWriteEvent(epoll_event& event) {
 }
 
 } // namespace network

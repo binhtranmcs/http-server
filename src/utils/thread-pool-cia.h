@@ -20,6 +20,9 @@
 
 #pragma once
 
+#include <sys/syscall.h>
+#include <unistd.h>
+
 #include <cassert>
 #include <future>
 #include <memory>
@@ -28,19 +31,16 @@
 #include <type_traits>
 #include <vector>
 
-#include <sys/syscall.h>
-#include <unistd.h>
-
 namespace kaldi {
 
 class join_threads {
-  std::vector<std::thread> &threads;
+  std::vector<std::thread>& threads;
 
 public:
-  explicit join_threads(std::vector<std::thread> &threads_) : threads(threads_) {
+  explicit join_threads(std::vector<std::thread>& threads_) : threads(threads_) {
   }
   ~join_threads() {
-    for (auto &thread : threads) {
+    for (auto& thread : threads) {
       if (thread.joinable()) {
         thread.join();
       }
@@ -48,7 +48,7 @@ public:
   }
 };
 
-template<typename T>
+template <typename T>
 class threadsafe_queue {
 private:
   mutable std::mutex mut;
@@ -59,7 +59,7 @@ private:
 public:
   threadsafe_queue() : done(false) {
   }
-  threadsafe_queue &operator=(const threadsafe_queue &) = delete;
+  threadsafe_queue& operator=(const threadsafe_queue&) = delete;
 
   void mark_done() {
     std::lock_guard<std::mutex> lk(mut);
@@ -73,24 +73,29 @@ public:
     }
   }
 
-  template<class U = T>
-  typename std::enable_if<std::is_same<T, U>::value && std::is_move_assignable<T>::value, void>::type push(T new_value) {
+  template <class U = T>
+  typename std::enable_if<std::is_same<T, U>::value && std::is_move_assignable<T>::value,
+      void>::type
+  push(T new_value) {
     std::lock_guard<std::mutex> lk(mut);
     // There appears to be no reason not to use std::move here...
     data_queue.push(std::move(new_value));
     data_cond.notify_one();
   }
-  template<class U = T>
-  typename std::enable_if<std::is_same<T, U>::value && std::is_copy_assignable<T>::value && !std::is_move_assignable<T>::value,
-                          void>::type
+  template <class U = T>
+  typename std::enable_if<std::is_same<T, U>::value && std::is_copy_assignable<T>::value &&
+          !std::is_move_assignable<T>::value,
+      void>::type
   push(T new_value) {
     std::lock_guard<std::mutex> lk(mut);
     // There appears to be no reason not to use std::move here...
     data_queue.push(new_value);
     data_cond.notify_one();
   }
-  template<class U = T>
-  typename std::enable_if<std::is_same<T, U>::value && std::is_move_assignable<T>::value, bool>::type wait_and_pop(T &value) {
+  template <class U = T>
+  typename std::enable_if<std::is_same<T, U>::value && std::is_move_assignable<T>::value,
+      bool>::type
+  wait_and_pop(T& value) {
     std::unique_lock<std::mutex> lk(mut);
     data_cond.wait(lk, [this] {
       return !data_queue.empty() || done;
@@ -103,10 +108,11 @@ public:
       return false;
     }
   }
-  template<class U = T>
-  typename std::enable_if<std::is_same<T, U>::value && std::is_copy_assignable<T>::value && !std::is_move_assignable<T>::value,
-                          bool>::type
-  wait_and_pop(T &value) {
+  template <class U = T>
+  typename std::enable_if<std::is_same<T, U>::value && std::is_copy_assignable<T>::value &&
+          !std::is_move_assignable<T>::value,
+      bool>::type
+  wait_and_pop(T& value) {
     std::unique_lock<std::mutex> lk(mut);
     data_cond.wait(lk, [this] {
       return !data_queue.empty() || done;
@@ -129,8 +135,10 @@ public:
     data_queue.pop();
     return res;
   }
-  template<class U = T>
-  typename std::enable_if<std::is_same<T, U>::value && std::is_move_assignable<T>::value, bool>::type try_pop(T &value) {
+  template <class U = T>
+  typename std::enable_if<std::is_same<T, U>::value && std::is_move_assignable<T>::value,
+      bool>::type
+  try_pop(T& value) {
     std::lock_guard<std::mutex> lk(mut);
     if (data_queue.empty()) {
       return false;
@@ -139,10 +147,11 @@ public:
     data_queue.pop();
     return true;
   }
-  template<class U = T>
-  typename std::enable_if<std::is_same<T, U>::value && std::is_copy_assignable<T>::value && !std::is_move_assignable<T>::value,
-                          bool>::type
-  try_pop(T &value) {
+  template <class U = T>
+  typename std::enable_if<std::is_same<T, U>::value && std::is_copy_assignable<T>::value &&
+          !std::is_move_assignable<T>::value,
+      bool>::type
+  try_pop(T& value) {
     std::lock_guard<std::mutex> lk(mut);
     if (data_queue.empty()) {
       return false;
@@ -151,8 +160,10 @@ public:
     data_queue.pop();
     return true;
   }
-  template<class U = T>
-  typename std::enable_if<std::is_same<T, U>::value && std::is_move_assignable<T>::value, std::unique_ptr<T>>::type try_pop() {
+  template <class U = T>
+  typename std::enable_if<std::is_same<T, U>::value && std::is_move_assignable<T>::value,
+      std::unique_ptr<T>>::type
+  try_pop() {
     std::lock_guard<std::mutex> lk(mut);
     if (data_queue.empty()) {
       return std::unique_ptr<T>();
@@ -161,9 +172,10 @@ public:
     data_queue.pop();
     return res;
   }
-  template<class U = T>
-  typename std::enable_if<std::is_same<T, U>::value && std::is_copy_assignable<T>::value && !std::is_move_assignable<T>::value,
-                          std::unique_ptr<T>>::type
+  template <class U = T>
+  typename std::enable_if<std::is_same<T, U>::value && std::is_copy_assignable<T>::value &&
+          !std::is_move_assignable<T>::value,
+      std::unique_ptr<T>>::type
   try_pop() {
     std::lock_guard<std::mutex> lk(mut);
     if (data_queue.empty()) {
@@ -217,7 +229,7 @@ public:
     done = true;
   }
 
-  template<typename FunctionType>
+  template <typename FunctionType>
   void submit(FunctionType f) {
     work_queue.push(std::function<void()>(f));
   }
@@ -233,10 +245,10 @@ class function_wrapper {
     }
   };
   std::unique_ptr<impl_base> impl;
-  template<typename F>
+  template <typename F>
   struct impl_type : impl_base {
     F f;
-    impl_type(F &&f_) : f(std::move(f_)) {
+    impl_type(F&& f_) : f(std::move(f_)) {
     }
     void call() {
       f();
@@ -244,22 +256,22 @@ class function_wrapper {
   };
 
 public:
-  template<typename F>
-  function_wrapper(F &&f) : impl(new impl_type<F>(std::move(f))) {
+  template <typename F>
+  function_wrapper(F&& f) : impl(new impl_type<F>(std::move(f))) {
   }
   void operator()() {
     impl->call();
   }
   function_wrapper() = default;
-  function_wrapper(function_wrapper &&other) : impl(std::move(other.impl)) {
+  function_wrapper(function_wrapper&& other) : impl(std::move(other.impl)) {
   }
-  function_wrapper &operator=(function_wrapper &&other) {
+  function_wrapper& operator=(function_wrapper&& other) {
     impl = std::move(other.impl);
     return *this;
   }
-  function_wrapper(const function_wrapper &) = delete;
-  function_wrapper(function_wrapper &) = delete;
-  function_wrapper &operator=(const function_wrapper &) = delete;
+  function_wrapper(const function_wrapper&) = delete;
+  function_wrapper(function_wrapper&) = delete;
+  function_wrapper& operator=(const function_wrapper&) = delete;
 };
 
 class futures_thread_pool {
@@ -300,7 +312,7 @@ public:
   }
 
   // can we include Args... args as well here? Don't think so...
-  template<typename FunctionType>
+  template <typename FunctionType>
   std::future<typename std::result_of<FunctionType()>::type> submit(FunctionType f) {
     typedef typename std::result_of<FunctionType()>::type result_type;
     std::packaged_task<result_type()> task(std::move(f));
@@ -360,7 +372,7 @@ public:
     done = true;
   }
 
-  template<typename FunctionType>
+  template <typename FunctionType>
   std::future<typename std::result_of<FunctionType()>::type> submit(FunctionType f) {
     typedef typename std::result_of<FunctionType()>::type result_type;
     std::packaged_task<result_type()> task(f);
@@ -383,8 +395,8 @@ private:
 public:
   work_stealing_queue() {
   }
-  work_stealing_queue(const work_stealing_queue &other) = delete;
-  work_stealing_queue &operator=(const work_stealing_queue &other) = delete;
+  work_stealing_queue(const work_stealing_queue& other) = delete;
+  work_stealing_queue& operator=(const work_stealing_queue& other) = delete;
   void push(data_type data) {
     std::lock_guard<std::mutex> lock(the_mutex);
     the_queue.push_front(std::move(data));
@@ -393,7 +405,7 @@ public:
     std::lock_guard<std::mutex> lock(the_mutex);
     return the_queue.empty();
   }
-  bool try_pop(data_type &res) {
+  bool try_pop(data_type& res) {
     std::lock_guard<std::mutex> lock(the_mutex);
     if (the_queue.empty()) {
       return false;
@@ -402,7 +414,7 @@ public:
     the_queue.pop_front();
     return true;
   }
-  bool try_steal(data_type &res) {
+  bool try_steal(data_type& res) {
     std::lock_guard<std::mutex> lock(the_mutex);
     if (the_queue.empty()) {
       return false;
@@ -428,15 +440,15 @@ class work_stealing_thread_pool {
   join_threads joiner;
   static thread_local work_stealing_queue *local_work_queue;
   static thread_local unsigned int my_index;
-  static bool pop_task_from_local_queue(task_type &task) {
+  static bool pop_task_from_local_queue(task_type& task) {
     return local_work_queue && local_work_queue->try_pop(task);
   }
 
-  bool pop_task_from_pool_queue(task_type &task) {
+  bool pop_task_from_pool_queue(task_type& task) {
     return pool_work_queue.try_pop(task);
   }
 
-  bool pop_task_from_other_thread_queue(task_type &task) {
+  bool pop_task_from_other_thread_queue(task_type& task) {
     for (unsigned int i = 0; i < queues.size(); ++i) {
       unsigned int const index = (my_index + i + 1) % queues.size();
       if (queues[index]->try_steal(task)) {
@@ -474,7 +486,7 @@ public:
     done = true;
   }
 
-  template<typename FunctionType>
+  template <typename FunctionType>
   std::future<typename std::result_of<FunctionType()>::type> submit(FunctionType f) {
     typedef typename std::result_of<FunctionType()>::type result_type;
     std::packaged_task<result_type()> task(f);

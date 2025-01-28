@@ -7,10 +7,8 @@
 
 namespace network {
 
-class HttpRequest {
+class HttpRequest {};
 
-};
+} // namespace network
 
-}
-
-#endif //HTTP_SERVER_SRC_HTTPREQUEST_H
+#endif // HTTP_SERVER_SRC_HTTPREQUEST_H

@@ -14,4 +14,4 @@ enum class HttpMethod {
 
 } // namespace network
 
-#endif //HTTP_SERVER_SRC_HTTP_HTTPMETHOD_H
+#endif // HTTP_SERVER_SRC_HTTP_HTTPMETHOD_H
