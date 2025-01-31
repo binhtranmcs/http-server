@@ -117,9 +117,6 @@ void HttpServer::EventLoop() {
   }
 }
 
-void HttpServer::AddHandler(std::string const& path, HttpMethod method, HttpHandler callback) {
-}
-
 void HttpServer::HandleEvent(epoll_event& event) {
   if (event.data.fd == server_fd_) {
     // this is a new connection
