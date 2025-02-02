@@ -20,9 +20,9 @@ public:
   explicit EpollServer(int port, int num_worker_threads = 4);
 
 
-  void AcceptLoop();
+  [[noreturn]] [[noreturn]] void AcceptLoop();
 
-  void WorkerLoop();
+  void WorkerLoop(int worker_id);
 
 private:
   int server_fd_;
