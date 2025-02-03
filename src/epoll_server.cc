@@ -15,7 +15,7 @@
 #include "utils.h"
 
 
-namespace tcp {
+namespace net {
 
 
 // TODO: use type erasure pattern
@@ -111,4 +111,4 @@ void EpollServer::WorkerLoop(int worker_id) {
 }
 
 
-} // namespace tcp
+} // namespace net

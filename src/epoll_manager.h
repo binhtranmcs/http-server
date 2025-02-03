@@ -12,7 +12,7 @@
 #include <vector>
 
 
-namespace tcp {
+namespace net {
 
 
 class EpollManager {
@@ -39,7 +39,7 @@ private:
 };
 
 
-} // namespace tcp
+} // namespace net
 
 
 #endif // HTTP_SERVER_SRC_EPOLL_MANAGER_H_

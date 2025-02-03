@@ -12,7 +12,10 @@
 #include "epoll_manager.h"
 
 
-namespace tcp {
+namespace net {
+
+
+class ProtocolHandler {};
 
 
 class EpollServer {
@@ -28,6 +31,8 @@ private:
   int server_fd_;
   int port_;
 
+  ProtocolHandler protocol_handler_;
+
   std::jthread accept_thread_;
   EpollManager server_epoll_;
 
@@ -37,7 +42,7 @@ private:
 };
 
 
-} // namespace tcp
+} // namespace net
 
 
 #endif // HTTP_SERVER_SRC_EPOLL_SERVER_H_

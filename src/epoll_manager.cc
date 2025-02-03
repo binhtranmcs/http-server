@@ -7,7 +7,7 @@
 #include "error_utils.h"
 
 
-namespace tcp {
+namespace net {
 
 
 EpollManager::EpollManager() {
@@ -38,4 +38,4 @@ int EpollManager::Wait() {
 }
 
 
-} // namespace tcp
+} // namespace net
