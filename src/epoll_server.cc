@@ -9,37 +9,23 @@
 #include <sys/socket.h>
 
 #include <cassert>
+#include <memory>
 #include <thread>
 
+#include "epoll_handler.h"
 #include "error_utils.h"
+#include "request_handler.h"
 #include "utils.h"
 
 
 namespace net {
 
 
-// TODO: use type erasure pattern
-class RequestContext {
-public:
-  int fd_;
-  std::string request_buffer_;
-
-
-  explicit RequestContext(int fd) : fd_(fd) {
-  }
-
-  void Handle(int events) {
-    // TODO
-  }
-
-private:
-};
-
-
 // TODO: template the protocol handler
 EpollServer::EpollServer(int port, int num_worker_threads)
     : port_(port)
-    , num_worker_threads_(num_worker_threads) {
+    , num_worker_threads_(num_worker_threads)
+    , worker_epolls_(num_worker_threads) {
   // create a tcp socket
   THROW_IF_ERROR_LT_0(server_fd_ = ::socket(AF_INET, SOCK_STREAM, 0), "::socket failed");
   int opt = 1;
@@ -62,8 +48,15 @@ EpollServer::EpollServer(int port, int num_worker_threads)
 
   // create worker threads to monitor
   for (int id = 0; id < num_worker_threads_; id++) {
+    worker_epolls_[id] = std::make_shared<EpollManager>();
     workers_.emplace_back(&EpollServer::WorkerLoop, this, id);
   }
+
+  // add server fd to interest list
+  epoll_event event;
+  event.events = EPOLLIN;
+  event.data.fd = server_fd_;
+  server_epoll_.Add(server_fd_, &event);
 }
 
 
@@ -72,24 +65,32 @@ EpollServer::EpollServer(int port, int num_worker_threads)
   auto& events = server_epoll_.Events();
   while (true) {
     int num_fds = server_epoll_.Wait();
+    if (num_fds == 0) {
+      std::this_thread::sleep_for(std::chrono::seconds(1));
+      continue;
+    }
+    std::cout << __func__ << std::endl;
     for (int i = 0; i < num_fds; i++) {
       auto& event = events[i];
       assert(event.data.fd == server_fd_);
       // get client fd to read from or write to
       int client_fd = ::accept(server_fd_, nullptr, nullptr);
       if (client_fd == -1) {
+        std::cerr << "error\n";
         // TODO: is this correct?
         continue;
       }
       utils::SetNonBlocking(client_fd);
+      auto worker_epoll = worker_epolls_[worker_id];
       // create new request context to manage client_fd
-      auto *request_ctx = new RequestContext(client_fd);
+      auto epoll_handler =
+          new EpollHandler(std::make_shared<RequestHandler>(client_fd, worker_epoll));
       epoll_event client_event{};
-      client_event.events = EPOLLIN;
-      client_event.data.ptr = request_ctx;
+      client_event.events = EPOLLIN | EPOLLET;
+      client_event.data.ptr = epoll_handler;
 
       // TODO: if this Add() failed, should I ignore or do something else?
-      worker_epolls_[worker_id].Add(client_fd, &client_event);
+      worker_epoll->Add(client_fd, &client_event);
       worker_id = (++worker_id == num_worker_threads_) ? 0 : worker_id;
     }
   }
@@ -97,15 +98,20 @@ EpollServer::EpollServer(int port, int num_worker_threads)
 
 
 void EpollServer::WorkerLoop(int worker_id) {
-  auto& worker_epoll = worker_epolls_[worker_id];
-  auto& events = worker_epoll.Events();
+  auto worker_epoll = worker_epolls_[worker_id];
+  auto& events = worker_epoll->Events();
   while (true) {
-    int num_fds = worker_epoll.Wait();
+    int num_fds = worker_epoll->Wait();
+    if (num_fds == 0) {
+      std::this_thread::sleep_for(std::chrono::seconds(1));
+      continue;
+    }
+    std::cout << __func__ << std::endl;
     for (int i = 0; i < num_fds; i++) {
       auto event = events[i];
-      auto *request_ctx = static_cast<RequestContext *>(event.data.ptr);
-      request_ctx->Handle(event.events);
-      // delete request_ctx;
+      auto *epoll_handler = static_cast<EpollHandler *>(event.data.ptr);
+      epoll_handler->Proceed(event.events);
+      delete epoll_handler;
     }
   }
 }

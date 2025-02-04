@@ -1,10 +1,12 @@
-#include <iostream>
 
-#include "src/HttpServer.h"
 
+#include "src/epoll_server.h"
+
+
+// echo -e binh | nc localhost 8080
 int main() {
-  network::HttpServer server("0.0.0.0", 8080, 4);
-  server.StartServer();
+  net::EpollServer server(8080, 1);
+  server.Start();
 }
 
 // runnable http server with benchmark
