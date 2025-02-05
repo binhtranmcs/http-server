@@ -1,11 +1,12 @@
 
 
 #include "src/epoll_server.h"
+#include "src/protocol_handler.h"
 
 
 // echo -e binh | nc localhost 8080
 int main() {
-  net::EpollServer server(8080, 1);
+  auto server = net::EpollServer<net::ProtocolHandler>(8080, 1);
   server.Start();
 }
 

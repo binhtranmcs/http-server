@@ -18,9 +18,9 @@ namespace net {
 
 // TODO: template-ize the RequestHandler and then this EpollHandler
 struct EpollHandler {
-  // template <typename THandler>
-  EpollHandler(std::shared_ptr<RequestHandler> handler)
-      : epoll_handler_(std::make_unique<EpollHandlerModel>(std::move(handler))) {
+  template <typename THandler>
+  explicit EpollHandler(std::shared_ptr<RequestHandler<THandler>> handler)
+      : epoll_handler_(std::make_unique<EpollHandlerModel<THandler>>(std::move(handler))) {
   }
 
   inline void Proceed(uint32_t events) const {
@@ -33,9 +33,9 @@ struct EpollHandler {
     virtual void Proceed(uint32_t events) const = 0;
   };
 
-  // template <typename THandler>
+  template <typename THandler>
   struct EpollHandlerModel : public EpollHandlerConcept {
-    explicit EpollHandlerModel(std::shared_ptr<RequestHandler> handler)
+    explicit EpollHandlerModel(std::shared_ptr<RequestHandler<THandler>> handler)
         : handler_(std::move(handler)) {
     }
 
@@ -43,7 +43,7 @@ struct EpollHandler {
       handler_->Handle(events);
     }
 
-    std::shared_ptr<RequestHandler> handler_;
+    std::shared_ptr<RequestHandler<THandler>> handler_;
   };
 
   std::unique_ptr<EpollHandlerConcept> epoll_handler_;
