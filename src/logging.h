@@ -30,19 +30,19 @@ inline std::string Timestamp() {
 #define FILENAME (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
 
 
-#define LOG(level, msg)                                                                          \
-  do {                                                                                           \
-    Timestamp();                                                                                 \
-    std::cout << Timestamp() << "\t[" << (level) << "] [" << FILENAME << ":" << __LINE__ << "] " \
-              << msg /*NOLINT*/ << std::endl;                                                    \
+#define LOG(level, msg)                                                                           \
+  do {                                                                                            \
+    Timestamp();                                                                                  \
+    std::cout << Timestamp() << "  [" << (level) << "]\t[" << FILENAME << ":" << __LINE__ << "] " \
+              << msg /*NOLINT*/ << std::endl;                                                     \
   } while (0)
 
 
 // always define log error
-#define LOG_ERROR(msg)                                                               \
-  do {                                                                               \
-    std::cerr << Timestamp() << "\t[ERROR] [" << FILENAME << ":" << __LINE__ << "] " \
-              << msg /*NOLINT*/ << std::endl;                                        \
+#define LOG_ERROR(msg)                                                                \
+  do {                                                                                \
+    std::cerr << Timestamp() << "  [ERROR]\t[" << FILENAME << ":" << __LINE__ << "] " \
+              << msg /*NOLINT*/ << std::endl;                                         \
   } while (0)
 
 #if defined(LOG_LEVEL_DEBUG)

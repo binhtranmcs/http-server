@@ -27,6 +27,7 @@ public:
   }
 
   ~RequestHandler() {
+    epoll_->Del(fd_);
     ::close(fd_);
   }
 
@@ -86,7 +87,7 @@ void RequestHandler<THandler>::HandleRead() {
       epoll_event event{};
       event.events = EPOLLIN | EPOLLET;
       event.data.ptr = new EpollHandler(SharedFromThis());
-      epoll_->Add(fd_, &event);
+      epoll_->Mod(fd_, &event);
       return;
     }
   }
