@@ -7,9 +7,7 @@
 
 
 #include <chrono>
-#include <cstring>
 #include <iomanip>
-#include <iostream>
 
 
 inline std::string Timestamp() {
@@ -24,7 +22,7 @@ inline std::string Timestamp() {
   std::ostringstream oss;
   oss << std::put_time(&now_tm, "%Y-%m-%d %H:%M:%S") << "." << std::setfill('0') << std::setw(9)
       << ns.count();
-  
+
   return oss.str();
 }
 

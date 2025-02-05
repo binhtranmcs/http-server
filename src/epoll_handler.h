@@ -10,10 +10,13 @@
 #include <iostream>
 #include <memory>
 
-#include "request_handler.h"
-
+#include "protocol_handler.h"
 
 namespace net {
+
+
+template <IProtocolHandler THandler>
+class RequestHandler;
 
 
 struct EpollHandler {

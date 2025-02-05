@@ -11,15 +11,10 @@
 #include <algorithm>
 #include <memory>
 
-#include "epoll_manager.h"
-#include "epoll_server.h"
-#include "protocol_handler.h"
+#include "epoll_handler.h"
 
 
 namespace net {
-
-
-struct EpollHandler;
 
 
 template <IProtocolHandler THandler>
