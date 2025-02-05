@@ -11,6 +11,7 @@
 #include <vector>
 
 #include "epoll_manager.h"
+#include "logging.h"
 #include "protocol_handler.h"
 
 
@@ -22,14 +23,14 @@ public:
   explicit EpollServer(int port, int num_worker_threads = 4);
 
   void Start() {
-    std::cout << "server started at port " << port_ << std::endl;
+    LOG_INFO("server started at port " << port_);
     AcceptLoop();
   }
 
 
-  [[noreturn]] [[noreturn]] void AcceptLoop();
+  [[noreturn]] void AcceptLoop();
 
-  void WorkerLoop(int worker_id);
+  [[noreturn]] void WorkerLoop(int worker_id);
 
 private:
   int server_fd_;

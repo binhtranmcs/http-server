@@ -6,6 +6,8 @@
 #define HTTP_SERVER_SRC_REQUEST_HANDLER_H
 
 
+#include <unistd.h>
+
 #include <algorithm>
 #include <memory>
 
@@ -27,7 +29,7 @@ public:
   }
 
   ~RequestHandler() {
-    close(fd_);
+    ::close(fd_);
   }
 
   void Handle(uint32_t events);

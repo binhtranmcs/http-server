@@ -2,6 +2,7 @@
 // Created by binhtt4 on 04/02/25.
 //
 
+
 #include "request_handler.h"
 
 #include <cassert>
@@ -18,7 +19,7 @@ void RequestHandler::Handle(uint32_t events) {
   } else if (events & EPOLLOUT) {
     HandleWrite();
   } else {
-    std::cerr << "events unrecognized " << events << std::endl;
+    LOG_ERROR("events unrecognized " << events);
     assert(false);
   }
 }

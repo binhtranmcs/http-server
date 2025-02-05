@@ -10,13 +10,15 @@
 #include <iostream>
 #include <stdexcept>
 
+#include "logging.h"
 
-#define THROW_IF_ERROR_LT_0(error, error_msg)                               \
-  do {                                                                      \
-    if ((error) < 0) {                                                      \
-      std::cerr << error_msg << ", errno " << std::strerror(errno) << '\n'; \
-      throw std::runtime_error(error_msg);                                  \
-    }                                                                       \
+
+#define THROW_IF_ERROR_LT_0(error, error_msg)                                \
+  do {                                                                       \
+    if ((error) < 0) {                                                       \
+      LOG_ERROR(error_msg /*NOLINT*/ << ", errno " << std::strerror(errno)); \
+      throw std::runtime_error(error_msg);                                   \
+    }                                                                        \
   } while (0)
 
 

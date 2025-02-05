@@ -9,6 +9,8 @@
 #include <iostream>
 #include <string>
 
+#include "logging.h"
+
 
 namespace net {
 
@@ -16,15 +18,14 @@ namespace net {
 // TODO make a concept of this and implement HttpHandler
 class ProtocolHandler {
 public:
-  ProtocolHandler() {
-  }
+  ProtocolHandler() = default;
 
   std::string ParseBuffer(const std::string& buffer) {
     return buffer;
   }
 
   bool Handle(const std::string& request_buffer, std::string& response_buffer) {
-    std::cerr << request_buffer << std::endl;
+    LOG_DEBUG(request_buffer);
     response_buffer = "hello " + request_buffer;
     return true;
   }

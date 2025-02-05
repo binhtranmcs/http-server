@@ -53,14 +53,14 @@ EpollServer::EpollServer(int port, int num_worker_threads)
   }
 
   // add server fd to interest list
-  epoll_event event;
+  epoll_event event{};
   event.events = EPOLLIN;
   event.data.fd = server_fd_;
   server_epoll_.Add(server_fd_, &event);
 }
 
 
-[[noreturn]] void EpollServer::AcceptLoop() {
+void EpollServer::AcceptLoop() {
   int worker_id = 0;
   auto& events = server_epoll_.Events();
   while (true) {
@@ -69,14 +69,14 @@ EpollServer::EpollServer(int port, int num_worker_threads)
       std::this_thread::sleep_for(std::chrono::seconds(1));
       continue;
     }
-    std::cout << __func__ << std::endl;
+    LOG_DEBUG(__func__);
     for (int i = 0; i < num_fds; i++) {
       auto& event = events[i];
       assert(event.data.fd == server_fd_);
       // get client fd to read from or write to
       int client_fd = ::accept(server_fd_, nullptr, nullptr);
       if (client_fd == -1) {
-        std::cerr << "error\n";
+        LOG_ERROR("error?");
         // TODO: is this correct?
         continue;
       }
@@ -106,7 +106,7 @@ void EpollServer::WorkerLoop(int worker_id) {
       std::this_thread::sleep_for(std::chrono::seconds(1));
       continue;
     }
-    std::cout << __func__ << std::endl;
+    LOG_DEBUG(__func__);
     for (int i = 0; i < num_fds; i++) {
       auto event = events[i];
       auto *epoll_handler = static_cast<EpollHandler *>(event.data.ptr);
