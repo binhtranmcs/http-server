@@ -15,22 +15,31 @@
 namespace net {
 
 
-// TODO make a concept of this and implement HttpHandler
-class ProtocolHandler {
-public:
-  ProtocolHandler() = default;
+template <typename T>
+concept IProtocolHandler = requires(T handler, const std::string& req, std::string& res) {
+  { handler.ParseBuffer(req) } -> std::convertible_to<std::string>;
+  { handler.Handle(req, res) } -> std::same_as<bool>;
+};
 
-  std::string ParseBuffer(const std::string& buffer) {
+
+class EchoHandler {
+public:
+  EchoHandler() = default;
+
+  [[nodiscard]] std::string ParseBuffer(const std::string& buffer) const {
+    (void *)dummy;
     return buffer;
   }
 
-  bool Handle(const std::string& request_buffer, std::string& response_buffer) {
+  bool Handle(const std::string& request_buffer, std::string& response_buffer) const {
+    (void *)dummy;
     LOG_DEBUG(request_buffer);
     response_buffer = "hello " + request_buffer;
     return true;
   }
 
 private:
+  long long dummy;
 };
 
 

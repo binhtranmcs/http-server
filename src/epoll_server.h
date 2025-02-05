@@ -24,7 +24,7 @@
 namespace net {
 
 
-template <typename TProtocolHandler>
+template <IProtocolHandler THandler>
 class EpollServer {
 public:
   explicit EpollServer(int port, int num_worker_threads = 4);
@@ -43,7 +43,7 @@ private:
   int server_fd_;
   int port_;
 
-  std::shared_ptr<ProtocolHandler> protocol_handler_;
+  std::shared_ptr<THandler> protocol_handler_;
 
   std::jthread accept_thread_;
   EpollManager server_epoll_;
@@ -54,8 +54,8 @@ private:
 };
 
 
-template <typename TProtocolHandler>
-EpollServer<TProtocolHandler>::EpollServer(int port, int num_worker_threads)
+template <IProtocolHandler THandler>
+EpollServer<THandler>::EpollServer(int port, int num_worker_threads)
     : port_(port)
     , num_worker_threads_(num_worker_threads)
     , worker_epolls_(num_worker_threads) {
@@ -93,8 +93,8 @@ EpollServer<TProtocolHandler>::EpollServer(int port, int num_worker_threads)
 }
 
 
-template <typename TProtocolHandler>
-void EpollServer<TProtocolHandler>::AcceptLoop() {
+template <IProtocolHandler THandler>
+void EpollServer<THandler>::AcceptLoop() {
   int worker_id = 0;
   auto& events = server_epoll_.Events();
   while (true) {
@@ -117,8 +117,8 @@ void EpollServer<TProtocolHandler>::AcceptLoop() {
       utils::SetNonBlocking(client_fd);
       auto worker_epoll = worker_epolls_[worker_id];
       // create new request context to manage client_fd
-      auto epoll_handler = new EpollHandler(
-          std::make_shared<RequestHandler<TProtocolHandler>>(client_fd, worker_epoll));
+      auto epoll_handler =
+          new EpollHandler(std::make_shared<RequestHandler<THandler>>(client_fd, worker_epoll));
       epoll_event client_event{};
       client_event.events = EPOLLIN | EPOLLET;
       client_event.data.ptr = epoll_handler;
@@ -131,8 +131,8 @@ void EpollServer<TProtocolHandler>::AcceptLoop() {
 }
 
 
-template <typename TProtocolHandler>
-void EpollServer<TProtocolHandler>::WorkerLoop(int worker_id) {
+template <IProtocolHandler THandler>
+void EpollServer<THandler>::WorkerLoop(int worker_id) {
   auto worker_epoll = worker_epolls_[worker_id];
   auto& events = worker_epoll->Events();
   while (true) {

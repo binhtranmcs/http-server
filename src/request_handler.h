@@ -22,7 +22,7 @@ namespace net {
 struct EpollHandler;
 
 
-template <typename THandler>
+template <IProtocolHandler THandler>
 class RequestHandler : public std::enable_shared_from_this<RequestHandler<THandler>> {
 public:
   explicit RequestHandler(int fd, std::shared_ptr<EpollManager> epoll)
@@ -60,7 +60,7 @@ private:
 };
 
 
-template <typename THandler>
+template <IProtocolHandler THandler>
 void RequestHandler<THandler>::Handle(uint32_t events) {
   if (events & EPOLLIN) {
     HandleRead();
@@ -73,7 +73,7 @@ void RequestHandler<THandler>::Handle(uint32_t events) {
 }
 
 
-template <typename THandler>
+template <IProtocolHandler THandler>
 void RequestHandler<THandler>::HandleRead() {
   while (true) {
     auto bytes_read = ::read(fd_, buffer_.data(), BUFFER_SIZE);
@@ -98,7 +98,7 @@ void RequestHandler<THandler>::HandleRead() {
 }
 
 
-template <typename THandler>
+template <IProtocolHandler THandler>
 void RequestHandler<THandler>::HandleWrite() {
   uint32_t total_bytes_sent{0};
   while (total_bytes_sent < response_buffer_.size()) {

@@ -4,9 +4,9 @@
 #include "src/protocol_handler.h"
 
 
-// echo -e binh | nc localhost 8080
+// echo -e binhtran | nc localhost 8080
 int main() {
-  auto server = net::EpollServer<net::ProtocolHandler>(8080, 1);
+  auto server = net::EpollServer<net::EchoHandler>(8080, 1);
   server.Start();
 }
 
