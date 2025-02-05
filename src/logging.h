@@ -7,7 +7,9 @@
 
 
 #include <chrono>
+#include <cstring>
 #include <iomanip>
+#include <iostream>
 
 
 inline std::string Timestamp() {

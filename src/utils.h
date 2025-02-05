@@ -18,6 +18,13 @@ inline void SetNonBlocking(int fd) {
 }
 
 
+inline void Trim(std::string_view& str) {
+  while (!str.empty() && (str.front() == ' ' || str.front() == '\t')) str.remove_prefix(1);
+  while (!str.empty() && (str.back() == ' ' || str.back() == '\t' || str.back() == '\r'))
+    str.remove_suffix(1);
+}
+
+
 } // namespace utils
 
 

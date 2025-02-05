@@ -13,6 +13,8 @@ elseif (CMAKE_LOG_LEVEL STREQUAL "WARN")
     add_definitions("-DLOG_LEVEL_WARN")
 endif ()
 
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
+
 add_executable(http_server main.cc)
 
 target_link_libraries(http_server PUBLIC epoll_server)

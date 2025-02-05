@@ -25,7 +25,7 @@ namespace net {
 template <IProtocolHandler THandler>
 class EpollServer {
 public:
-  explicit EpollServer(int port, int num_worker_threads = 4);
+  explicit EpollServer(int port, int num_worker_threads, std::shared_ptr<THandler> handler);
 
   void Start() {
     LOG_INFO("server started at port " << port_);
@@ -53,8 +53,10 @@ private:
 
 
 template <IProtocolHandler THandler>
-EpollServer<THandler>::EpollServer(int port, int num_worker_threads)
+EpollServer<THandler>::EpollServer(int port, int num_worker_threads,
+    std::shared_ptr<THandler> handler)
     : port_(port)
+    , protocol_handler_(std::move(handler))
     , num_worker_threads_(num_worker_threads)
     , worker_epolls_(num_worker_threads) {
   // create a tcp socket
@@ -98,15 +100,16 @@ void EpollServer<THandler>::AcceptLoop() {
   while (true) {
     int num_fds = server_epoll_.Wait();
     if (num_fds == 0) {
-      std::this_thread::sleep_for(std::chrono::seconds(1));
+      std::this_thread::yield();
       continue;
     }
-    LOG_DEBUG(__func__);
+    LOG_DEBUG(__func__ << " " << num_fds);
     for (int i = 0; i < num_fds; i++) {
       auto& event = events[i];
       assert(event.data.fd == server_fd_);
       // get client fd to read from or write to
       int client_fd = ::accept(server_fd_, nullptr, nullptr);
+      LOG_DEBUG(__func__ << " " << client_fd);
       if (client_fd == -1) {
         LOG_ERROR("error?");
         // TODO: is this correct?
@@ -115,8 +118,8 @@ void EpollServer<THandler>::AcceptLoop() {
       utils::SetNonBlocking(client_fd);
       auto worker_epoll = worker_epolls_[worker_id];
       // create new request context to manage client_fd
-      auto epoll_handler =
-          new EpollHandler(std::make_shared<RequestHandler<THandler>>(client_fd, worker_epoll));
+      auto epoll_handler = new EpollHandler(
+          std::make_shared<RequestHandler<THandler>>(client_fd, worker_epoll, protocol_handler_));
       epoll_event client_event{};
       client_event.events = EPOLLIN | EPOLLET;
       client_event.data.ptr = epoll_handler;
@@ -136,10 +139,10 @@ void EpollServer<THandler>::WorkerLoop(int worker_id) {
   while (true) {
     int num_fds = worker_epoll->Wait();
     if (num_fds == 0) {
-      std::this_thread::sleep_for(std::chrono::seconds(1));
+      std::this_thread::yield();
       continue;
     }
-    LOG_DEBUG(__func__);
+    LOG_DEBUG(__func__ << " " << num_fds);
     for (int i = 0; i < num_fds; i++) {
       auto event = events[i];
       auto *epoll_handler = static_cast<EpollHandler *>(event.data.ptr);

@@ -6,7 +6,6 @@
 #define HTTP_SERVER_SRC_ERROR_UTILS_H_
 
 
-#include <cstring>
 #include <iostream>
 #include <stdexcept>
 

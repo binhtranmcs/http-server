@@ -20,13 +20,19 @@ namespace net {
 template <IProtocolHandler THandler>
 class RequestHandler : public std::enable_shared_from_this<RequestHandler<THandler>> {
 public:
-  explicit RequestHandler(int fd, std::shared_ptr<EpollManager> epoll)
+  using Request = THandler::Request;
+  using Response = THandler::Response;
+
+  explicit RequestHandler(int fd, std::shared_ptr<EpollManager> epoll,
+      std::shared_ptr<THandler> protocol_handler)
       : fd_(fd)
-      , epoll_(std::move(epoll)) {
+      , epoll_(std::move(epoll))
+      , protocol_handler_(std::move(protocol_handler)) {
     buffer_.resize(BUFFER_SIZE);
   }
 
   ~RequestHandler() {
+    LOG_DEBUG(__func__ << ' ' << fd_);
     epoll_->Del(fd_);
     ::close(fd_);
   }
@@ -53,11 +59,14 @@ private:
 
   std::shared_ptr<EpollManager> epoll_;
   std::shared_ptr<THandler> protocol_handler_;
+  Request request_;
+  Response response_;
 };
 
 
 template <IProtocolHandler THandler>
 void RequestHandler<THandler>::Handle(uint32_t events) {
+  LOG_DEBUG(__func__);
   if (events & EPOLLIN) {
     HandleRead();
   } else if (events & EPOLLOUT) {
@@ -73,15 +82,17 @@ template <IProtocolHandler THandler>
 void RequestHandler<THandler>::HandleRead() {
   while (true) {
     auto bytes_read = ::read(fd_, buffer_.data(), BUFFER_SIZE);
+    LOG_DEBUG(__func__ << ' ' << bytes_read << ' ' << fd_ << ' ' << buffer_.size());
     if (bytes_read > 0) {
       request_buffer_.append(buffer_, 0, bytes_read);
-      std::string buffer = protocol_handler_->ParseBuffer(request_buffer_);
-      if (!buffer.empty()) {
-        finished_ = protocol_handler_->Handle(buffer, response_buffer_);
+      bool new_request_parsed = request_.ParseBuffer(request_buffer_);
+      if (new_request_parsed) {
+        finished_ = protocol_handler_->Handle(request_, response_);
+        response_buffer_ = response_.GetBuffer();
         HandleWrite();
-        if (finished_) {
-          return;
-        }
+      }
+      if (finished_) {
+        return;
       }
     } else if (bytes_read == -1 && (errno == EAGAIN || errno == EWOULDBLOCK)) {
       epoll_event event{};
@@ -99,13 +110,14 @@ void RequestHandler<THandler>::HandleWrite() {
   uint32_t total_bytes_sent{0};
   while (total_bytes_sent < response_buffer_.size()) {
     auto bytes_sent = ::write(fd_, response_buffer_.c_str(), response_buffer_.size());
+    LOG_DEBUG(__func__ << ' ' << bytes_sent << ' ' << fd_);
     if (bytes_sent > 0) {
       total_bytes_sent += bytes_sent;
     } else if (bytes_sent == -1 && (errno == EAGAIN || errno == EWOULDBLOCK)) {
       epoll_event event{};
       event.events = EPOLLOUT | EPOLLET;
       event.data.ptr = new EpollHandler(SharedFromThis());
-      epoll_->Add(fd_, &event);
+      epoll_->Mod(fd_, &event);
       return;
     } else {
       return;
