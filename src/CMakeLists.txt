@@ -6,3 +6,5 @@ add_library(epoll_server STATIC
 )
 
 target_link_libraries(epoll_server PUBLIC Threads::Threads)
+
+target_compile_options(epoll_server PRIVATE -Werror -Wall -Wextra)

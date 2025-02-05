@@ -27,12 +27,12 @@ public:
   EchoHandler() = default;
 
   [[nodiscard]] std::string ParseBuffer(const std::string& buffer) const {
-    (void *)dummy;
+    (void)dummy;
     return buffer;
   }
 
   bool Handle(const std::string& request_buffer, std::string& response_buffer) const {
-    (void *)dummy;
+    (void)dummy;
     LOG_DEBUG(request_buffer);
     response_buffer = "hello " + request_buffer;
     return true;

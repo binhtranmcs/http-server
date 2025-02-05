@@ -17,4 +17,6 @@ add_executable(http_server main.cc)
 
 target_link_libraries(http_server PUBLIC epoll_server)
 
+target_compile_options(http_server PRIVATE -Werror -Wall -Wextra)
+
 add_subdirectory(src)
